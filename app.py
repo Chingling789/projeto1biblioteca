@@ -338,6 +338,61 @@ def excluir_livro(id_livro):
     except Exception as erro:
         return f"Erro ao excluir livro: {erro}"
 
+# Rota para devolução de livro
+@app.route("/emprestimos/devolver/<int:id_emprestimo>")
+def devolver_livro(id_emprestimo):
+
+
+    try:
+        conexao = conectar()
+        cursor = conexao.cursor(dictionary=True)
+
+
+        cursor.execute("""
+            SELECT id_livro
+            FROM emprestimo
+            WHERE id_emprestimo = %s
+        """, (id_emprestimo,))
+
+
+        emprestimo = cursor.fetchone()
+
+
+        if emprestimo:
+
+
+            id_livro = emprestimo["id_livro"]
+
+
+            cursor.execute("""
+                UPDATE emprestimo
+                SET
+                    data_devolucao = CURDATE(),
+                    status = 'Devolvido'
+                WHERE id_emprestimo = %s
+            """, (id_emprestimo,))
+
+
+            cursor.execute("""
+                UPDATE livro
+                SET status = 'Disponível'
+                WHERE id_livro = %s
+            """, (id_livro,))
+
+
+            conexao.commit()
+
+
+        cursor.close()
+        conexao.close()
+
+
+        return redirect("/emprestimos")
+
+
+    except Exception as erro:
+        return f"Erro ao devolver livro: {erro}"
+
 # Rotas para biliotecario
 @app.route("/bibliotecarios")
 def listar_bibliotecarios():
@@ -359,9 +414,6 @@ def listar_bibliotecarios():
 
     except Exception as erro:
         return f"Erro ao listar bibliotecários: {erro}"
-
-
-
 
 @app.route("/bibliotecarios/novo")
 def formulario_bibliotecario():
@@ -638,62 +690,6 @@ def cadastrar_emprestimo():
 
     except Exception as erro:
         return f"Erro ao cadastrar empréstimo: {erro}"
-
-# Rota para devolução de livro
-@app.route("/emprestimos/devolver/<int:id_emprestimo>")
-def devolver_livro(id_emprestimo):
-
-
-    try:
-        conexao = conectar()
-        cursor = conexao.cursor(dictionary=True)
-
-
-        cursor.execute("""
-            SELECT id_livro
-            FROM emprestimo
-            WHERE id_emprestimo = %s
-        """, (id_emprestimo,))
-
-
-        emprestimo = cursor.fetchone()
-
-
-        if emprestimo:
-
-
-            id_livro = emprestimo["id_livro"]
-
-
-            cursor.execute("""
-                UPDATE emprestimo
-                SET
-                    data_devolucao = CURDATE(),
-                    status = 'Devolvido'
-                WHERE id_emprestimo = %s
-            """, (id_emprestimo,))
-
-
-            cursor.execute("""
-                UPDATE livro
-                SET status = 'Disponível'
-                WHERE id_livro = %s
-            """, (id_livro,))
-
-
-            conexao.commit()
-
-
-        cursor.close()
-        conexao.close()
-
-
-        return redirect("/emprestimos")
-
-
-    except Exception as erro:
-        return f"Erro ao devolver livro: {erro}"
-
 
 if __name__ == "__main__":
     app.run(debug=True)
